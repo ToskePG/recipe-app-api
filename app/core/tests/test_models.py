@@ -32,7 +32,7 @@ class ModelTests(TestCase):
             ['TEST5@EXAMPLE.COM', 'TEST5@example.com'],
         ]
         for email, expected in sample_emails:
-            user = get_user_model().objects.create_user(email, 'samplePassword123') # noqa: E501
+            user = get_user_model().objects.create_user(email, 'samplePassword123')  # noqa: E501
             self.assertEqual(user.email, expected)
 
     def test_new_user_without_email_raises_error(self):
