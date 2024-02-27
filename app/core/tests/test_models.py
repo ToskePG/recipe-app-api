@@ -21,7 +21,7 @@ class ModelTests(TestCase):
         self.assertTrue(user.check_password(password), password)
 
     def test_new_user_email_normalized(self):
-        """Test email is normalized for new users. 
+        """Test email is normalized for new users.
         Only checking for email, password can be the same for all users
         """
         sample_emails = [
@@ -32,7 +32,7 @@ class ModelTests(TestCase):
             ['TEST5@EXAMPLE.COM', 'TEST5@example.com'],
         ]
         for email, expected in sample_emails:
-            user = get_user_model().objects.create_user(email, 'samplePassword123')
+            user = get_user_model().objects.create_user(email, 'samplePassword123') # noqa: E501
             self.assertEqual(user.email, expected)
 
     def test_new_user_without_email_raises_error(self):
