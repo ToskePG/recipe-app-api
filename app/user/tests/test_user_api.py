@@ -1,5 +1,5 @@
 """
-Tests for the user API
+Tests for the user API.
 """
 from django.test import TestCase
 from django.contrib.auth import get_user_model
@@ -18,31 +18,31 @@ def create_user(**params):
 
 
 class PublicUserApiTests(TestCase):
-    """Test public features of the user API"""
-    
+    """Test the public features of the user API."""
+
     def setUp(self):
-        self.client = APIClient
-        
+        self.client = APIClient()
+
     def test_create_user_success(self):
         """Test creating a user is successful."""
         payload = {
             'email': 'test@example.com',
-            'password': 'testPass123',
+            'password': 'testpass123',
             'name': 'Test Name',
         }
         res = self.client.post(CREATE_USER_URL, payload)
-        
+
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         user = get_user_model().objects.get(email=payload['email'])
         self.assertTrue(user.check_password(payload['password']))
         self.assertNotIn('password', res.data)
-        
+
     def test_user_with_email_exists_error(self):
-        """Test error returned if user with email exists"""
+        """Test error returned if user with email exists."""
         payload = {
             'email': 'test@example.com',
-            'password': 'testPass123',
-            'name': 'Test name',
+            'password': 'testpass123',
+            'name': 'Test Name',
         }
         create_user(**payload)
         res = self.client.post(CREATE_USER_URL, payload)
@@ -50,10 +50,10 @@ class PublicUserApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_password_too_short_error(self):
-        """Test if the password is too short"""
+        """Test an error is returned if password less than 5 chars."""
         payload = {
             'email': 'test@example.com',
-            'password': 'test',
+            'password': 'pw',
             'name': 'Test name',
         }
         res = self.client.post(CREATE_USER_URL, payload)
@@ -63,4 +63,3 @@ class PublicUserApiTests(TestCase):
             email=payload['email']
         ).exists()
         self.assertFalse(user_exists)
-        
