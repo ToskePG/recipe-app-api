@@ -37,13 +37,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Create a new recipe"""
         serializer.save(user=self.request.user)
 
+
 class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """Manage tags in database."""
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         """Override get_queryset method to be sure you filter for auth user."""
         return self.queryset.filter(user=self.request.user).order_by('-name')
