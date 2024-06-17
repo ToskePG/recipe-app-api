@@ -80,4 +80,4 @@ class ModelTests(TestCase):
         user = create_user()
         tag = models.Tag.objects.create(user=user, name='Tag1')
         
-        self.assertEqual(str(tag), tag(name))
+        self.assertEqual(str(tag), tag.name)
