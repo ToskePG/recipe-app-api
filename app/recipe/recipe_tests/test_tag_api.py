@@ -1,5 +1,5 @@
 """
-Tests for the tags API
+Tests for the tags API.
 """
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -16,7 +16,12 @@ from recipe.serializers import TagSerializer
 TAGS_URL = reverse('recipe:tag-list')
 
 
-def create_user(email='user@example.com', password='testPass123'):
+def detail_url(tag_id):
+    """Create and return a tag detail url."""
+    return reverse('recipe:tag-detail', args=[tag_id])
+
+
+def create_user(email='user@example.com', password='testpass123'):
     """Create and return a user."""
     return get_user_model().objects.create_user(email=email, password=password)
 
@@ -28,45 +33,53 @@ class PublicTagsApiTests(TestCase):
         self.client = APIClient()
 
     def test_auth_required(self):
-        """Test auth is required for retriving tags."""
+        """Test auth is required for retrieving tags."""
         res = self.client.get(TAGS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    class PrivateTagsApiTests(TestCase):
-        """Test authenticated API requests."""
 
-        def setUp(self):
-            """Authenticate the user"""
-            self.user = create_user()
-            self.client = APIClient()
-            self.client.force_authenticate(self.user)
+class PrivateTagsApiTests(TestCase):
+    """Test authenticated API requests."""
 
-        def test_retrieve_tags(self):
-            """Test retreving a list of tags."""
+    def setUp(self):
+        self.user = create_user()
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
 
-            """Creating tags for tests."""
-            Tag.objects.create(user=self.user, name='Vegan')
-            Tag.objects.create(user=self.user, name='Dessert')
+    def test_retrieve_tags(self):
+        """Test retrieving a list of tags."""
+        Tag.objects.create(user=self.user, name='Vegan')
+        Tag.objects.create(user=self.user, name='Dessert')
 
-            """Making a call towards the TAG API."""
-            res = self.client.get(TAGS_URL)
+        res = self.client.get(TAGS_URL)
 
-            """Getting the tag response and putting it in tag serializer."""
-            tags = Tag.objects.all().order_by('-name')
-            serializer = TagSerializer(tags, many=True)
-            self.assertEqual(res.status_code, status.HTTP_200_OK)
-            self.assertEqual(res.data, serializer.data)
+        tags = Tag.objects.all().order_by('-name')
+        serializer = TagSerializer(tags, many=True)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serializer.data)
 
-        def test_tags_limited_to_user(self):
-            """Test list of tags is limited to authenticated user."""
-            user2 = create_user(email='user2@example.com')
-            Tag.objects.create(user=user2, name='Fruity')
-            tag = Tag.objects.create(user=self.user, name='Comfort food')
+    def test_tags_limited_to_user(self):
+        """Test list of tags is limited to authenticated user."""
+        user2 = create_user(email='user2@example.com')
+        Tag.objects.create(user=user2, name='Fruity')
+        tag = Tag.objects.create(user=self.user, name='Comfort Food')
 
-            res = self.client.get(TAGS_URL)
+        res = self.client.get(TAGS_URL)
 
-            self.assertEqual(res.status_code, status.HTTP_200_OK)
-            self.assertEqual(len(res.data), 1)
-            self.assertEqual(res.data[0]['name'], tag.name)
-            self.assertEqual(res.data[0]['id'], tag.id)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]['name'], tag.name)
+        self.assertEqual(res.data[0]['id'], tag.id)
+
+    def test_update_tag(self):
+        """Test updating a tag."""
+        tag = Tag.objects.create(user=self.user, name='After Dinner')
+
+        payload = {'name': 'Dessert'}
+        url = detail_url(tag.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        tag.refresh_from_db()
+        self.assertEqual(tag.name, payload['name'])
